@@ -182,5 +182,7 @@ if __name__ == '__main__':
     # todo: make q_learning a class and pass config as a parameter
     # todo: perhaps write rl algorithm super class
     # todo: parameterize td_update with "max=True" for Q_learning vs SARSA (but perhaps first implement all algorithms then refactor, find commonalities etc.)
+    # todo: implement Q function as a Variable
+    # implement n-step SARSA, n-step q-learning?
     train_data, test_data, num_steps = q_learning(env, episodes, epsilon_decay=agent_eps_decay, epsilon=agent_eps, discount_factor=.99, alpha=.5,
                                                   eval_every=eval_eps, render_eval=not no_render)
