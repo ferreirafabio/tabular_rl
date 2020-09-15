@@ -1,7 +1,3 @@
-"""
-Taken from https://github.com/automl/TabularTempoRL/
-"""
-
 import numpy as np
 
 from collections import defaultdict
@@ -9,7 +5,7 @@ from envs.Grid import GridCore
 from agents.rl_helpers import get_decay_schedule, make_epsilon_greedy_policy, td_update
 
 
-def q_learning(
+def double_q_learning(
         environment: GridCore,
         num_episodes: int,
         discount_factor: float = 1.0,
@@ -20,7 +16,8 @@ def q_learning(
         eval_every: int = 10,
         render_eval: bool = True):
     """
-    Vanilla tabular Q-learning algorithm
+    Double tabular Q-learning algorithm following
+    Algorithm 1 from https://papers.nips.cc/paper/3964-double-q-learning.pdf
     :param environment: which environment to use
     :param num_episodes: number of episodes to train
     :param discount_factor: discount factor used in TD updates
@@ -37,7 +34,8 @@ def q_learning(
     assert alpha > 0, 'Learning rate has to be positive'
     # The action-value function.
     # Nested dict that maps state -> (action -> action-value).
-    Q = defaultdict(lambda: np.zeros(environment.action_space.n))
+    Q_a = defaultdict(lambda: np.zeros(environment.action_space.n))
+    Q_b = defaultdict(lambda: np.zeros(environment.action_space.n))
 
     # Keeps track of episode lengths and rewards
     rewards = []
@@ -52,7 +50,7 @@ def q_learning(
         # print('#' * 100)
         epsilon = epsilon_schedule[min(i_episode, num_episodes - 1)]
         # The policy we're following
-        policy = make_epsilon_greedy_policy(Q, epsilon, environment.action_space.n)
+        policy = make_epsilon_greedy_policy(Q_a, epsilon, environment.action_space.n, Q_b=Q_b)
         policy_state = environment.reset()
         episode_length, cummulative_reward = 0, 0
         while True:  # roll out episode
@@ -61,8 +59,14 @@ def q_learning(
             cummulative_reward += policy_reward
             episode_length += 1
 
-            Q[policy_state][policy_action] = td_update(Q, policy_state, policy_action,
-                                                       policy_reward, s_, discount_factor, alpha, policy_done)
+            if np.random.random() < 0.5:
+                Q_a[policy_state][policy_action] = td_update(Q_a, policy_state, policy_action,
+                                                             policy_reward, s_, discount_factor, alpha, policy_done,
+                                                             Q_b)
+            else:
+                Q_b[policy_state][policy_action] = td_update(Q_b, policy_state, policy_action,
+                                                             policy_reward, s_, discount_factor, alpha, policy_done,
+                                                             Q_a)
 
             if policy_done:
                 break
@@ -79,7 +83,7 @@ def q_learning(
             if render_eval:
                 environment.render()
             while True:  # roll out episode
-                policy_action = np.random.choice(np.flatnonzero(Q[policy_state] == Q[policy_state].max()))
+                policy_action = np.random.choice(np.flatnonzero(Q_a[policy_state] == Q_a[policy_state].max()))
                 environment.total_steps -= 1  # don't count evaluation steps
                 s_, policy_reward, policy_done, _ = environment.step(policy_action)
                 test_steps += 1
