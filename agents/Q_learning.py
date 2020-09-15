@@ -12,6 +12,99 @@ from envs.Grid import GridCore
 from utils import get_env
 
 
+def sarsa(
+        environment: GridCore,
+        num_episodes: int,
+        discount_factor: float = 1.0,
+        alpha: float = 0.5,
+        epsilon: float = 0.1,
+        epsilon_decay: str = 'const',
+        decay_starts: int = 0,
+        eval_every: int = 10,
+        render_eval: bool = True):
+    """
+    Vanilla tabular Q-learning algorithm
+    :param environment: which environment to use
+    :param num_episodes: number of episodes to train
+    :param discount_factor: discount factor used in TD updates
+    :param alpha: learning rate used in TD updates
+    :param epsilon: exploration fraction (either constant or starting value for schedule)
+    :param epsilon_decay: determine type of exploration (constant, linear/exponential decay schedule)
+    :param decay_starts: After how many episodes epsilon decay starts
+    :param eval_every: Number of episodes between evaluations
+    :param render_eval: Flag to activate/deactivate rendering of evaluation runs
+    :return: training and evaluation statistics (i.e. rewards and episode lengths)
+    """
+    assert 0 <= discount_factor <= 1, 'Lambda should be in [0, 1]'
+    assert 0 <= epsilon <= 1, 'epsilon has to be in [0, 1]'
+    assert alpha > 0, 'Learning rate has to be positive'
+    # The action-value function.
+    # Nested dict that maps state -> (action -> action-value).
+    Q = defaultdict(lambda: np.zeros(environment.action_space.n))
+
+    # Keeps track of episode lengths and rewards
+    rewards = []
+    lens = []
+    test_rewards = []
+    test_lens = []
+    train_steps_list = []
+    test_steps_list = []
+
+    epsilon_schedule = get_decay_schedule(epsilon, decay_starts, num_episodes, epsilon_decay)
+    for i_episode in range(num_episodes + 1):
+        # print('#' * 100)
+        epsilon = epsilon_schedule[min(i_episode, num_episodes - 1)]
+        # The policy we're following
+        policy = make_epsilon_greedy_policy(Q, epsilon, environment.action_space.n)
+        policy_state = environment.reset()
+        episode_length, cummulative_reward = 0, 0
+        policy_action = np.random.choice(list(range(environment.action_space.n)), p=policy(policy_state))
+        while True:  # roll out episode
+            s_, policy_reward, policy_done, _ = environment.step(policy_action)
+            a_ = np.random.choice(list(range(environment.action_space.n)), p=policy(s_))
+            cummulative_reward += policy_reward
+            episode_length += 1
+
+            Q[policy_state][policy_action] = td_update(Q, policy_state, policy_action,
+                                                       policy_reward, s_, discount_factor, alpha, policy_done,
+                                                       action_=a_)
+
+            if policy_done:
+                break
+            policy_state = s_
+            policy_action = a_
+        rewards.append(cummulative_reward)
+        lens.append(episode_length)
+        train_steps_list.append(environment.total_steps)
+
+        # evaluation with greedy policy
+        test_steps = 0
+        if i_episode % eval_every == 0:
+            policy_state = environment.reset()
+            episode_length, cummulative_reward = 0, 0
+            if render_eval:
+                environment.render()
+            while True:  # roll out episode
+                policy_action = np.random.choice(np.flatnonzero(Q[policy_state] == Q[policy_state].max()))
+                environment.total_steps -= 1  # don't count evaluation steps
+                s_, policy_reward, policy_done, _ = environment.step(policy_action)
+                test_steps += 1
+                if render_eval:
+                    environment.render()
+                s_ = s_
+                cummulative_reward += policy_reward
+                episode_length += 1
+                if policy_done:
+                    break
+                policy_state = s_
+            test_rewards.append(cummulative_reward)
+            test_lens.append(episode_length)
+            test_steps_list.append(test_steps)
+            print('Done %4d/%4d episodes' % (i_episode, num_episodes))
+
+    return (rewards, lens), (test_rewards, test_lens), (train_steps_list, test_steps_list)
+
+
 def q_learning(
         environment: GridCore,
         num_episodes: int,
@@ -65,7 +158,7 @@ def q_learning(
             episode_length += 1
 
             Q[policy_state][policy_action] = td_update(Q, policy_state, policy_action,
-                                                       policy_reward, s_, discount_factor, alpha)
+                                                       policy_reward, s_, discount_factor, alpha, policy_done)
 
             if policy_done:
                 break
@@ -158,10 +251,12 @@ def double_q_learning(
 
             if np.random.random() < 0.5:
                 Q_a[policy_state][policy_action] = td_update(Q_a, policy_state, policy_action,
-                                                             policy_reward, s_, discount_factor, alpha, Q_b)
+                                                             policy_reward, s_, discount_factor, alpha, policy_done,
+                                                             Q_b)
             else:
                 Q_b[policy_state][policy_action] = td_update(Q_b, policy_state, policy_action,
-                                                             policy_reward, s_, discount_factor, alpha, Q_a)
+                                                             policy_reward, s_, discount_factor, alpha, policy_done,
+                                                             Q_a)
 
             if policy_done:
                 break
@@ -251,23 +346,28 @@ def get_decay_schedule(start_val: float, decay_start: int, num_steps: int, type_
 
 
 def td_update(q: defaultdict, state: int, action: int, reward: float, next_state: int, gamma: float, alpha: float,
-              q_b: Optional[defaultdict] = None):
+              done: bool = False, q_b: Optional[defaultdict] = None, action_: Optional[int] = None):
     """ Simple TD update rule """
 
     if q_b is None:
-        # TD update
-        best_next_action = np.random.choice(
-            np.flatnonzero(q[next_state] == q[next_state].max()))  # greedy best next (with tie-breaking)
-        td_target = reward + gamma * q[next_state][best_next_action]
-        td_delta = td_target - q[state][action]
-        return q[state][action] + alpha * td_delta
+        if action_ is None:
+            # TD update
+            best_next_action = np.random.choice(
+                np.flatnonzero(q[next_state] == q[next_state].max()))  # greedy best next (with tie-breaking)
+            td_target = reward + gamma * q[next_state][best_next_action]
+        else:
+            # SARSA update
+            td_target = reward + gamma * q[next_state][action_]
     else:
         # Double Q-learning TD update
         best_next_action = np.random.choice(
             np.flatnonzero(q[next_state] == q[next_state].max()))  # greedy best next (with tie-breaking)
         td_target = reward + gamma * q_b[next_state][best_next_action]
+    if not done:
         td_delta = td_target - q[state][action]
-        return q[state][action] + alpha * td_delta
+    else:
+        td_delta = td_target  # - 0
+    return q[state][action] + alpha * td_delta
 
 
 if __name__ == '__main__':
@@ -312,5 +412,9 @@ if __name__ == '__main__':
         train_data, test_data, num_steps = double_q_learning(env, episodes, epsilon_decay=agent_eps_decay,
                                                              epsilon=agent_eps, discount_factor=.99, alpha=.5,
                                                              eval_every=eval_eps, render_eval=not no_render)
+    elif agent_name == 'sarsa':
+        train_data, test_data, num_steps = sarsa(env, episodes, epsilon_decay=agent_eps_decay,
+                                                 epsilon=agent_eps, discount_factor=.99, alpha=.5,
+                                                 eval_every=eval_eps, render_eval=not no_render)
     else:
         raise NotImplementedError
