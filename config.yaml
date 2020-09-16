@@ -8,20 +8,20 @@ agents:
   q_learning:
     env_max_steps: !!int 100                 # Maximal steps in environment before termination.
     episodes: !!int 100_000                   # Number of training episodes
-    agent_eps_decay: !!str linear            # Epsilon decay schedule, in (linear, log, const)
-    agent_eps: !!float 1.0                   # Epsilon value. Used as start value when decay linear or log. Otherwise constant value.
+    agent_eps_decay: !!str const            # Epsilon decay schedule, in (linear, log, const)
+    agent_eps: !!float 0.1                   # Epsilon value. Used as start value when decay linear or log. Otherwise constant value.
 
   double_q_learning:
     env_max_steps: !!int 100                 # Maximal steps in environment before termination.
     episodes: !!int 100_000                   # Number of training episodes
-    agent_eps_decay: !!str linear            # Epsilon decay schedule, in (linear, log, const)
-    agent_eps: !!float 1.0                   # Epsilon value. Used as start value when decay linear or log. Otherwise constant value.
+    agent_eps_decay: !!str const            # Epsilon decay schedule, in (linear, log, const)
+    agent_eps: !!float 0.1                   # Epsilon value. Used as start value when decay linear or log. Otherwise constant value.
 
   sarsa:
     env_max_steps: !!int 100                 # Maximal steps in environment before termination.
     episodes: !!int 100_000                   # Number of training episodes
-    agent_eps_decay: !!str linear            # Epsilon decay schedule, in (linear, log, const)
-    agent_eps: !!float 1.0                   # Epsilon value. Used as start value when decay linear or log. Otherwise constant value.
+    agent_eps_decay: !!str const            # Epsilon decay schedule, in (linear, log, const)
+    agent_eps: !!float 0.1                   # Epsilon value. Used as start value when decay linear or log. Otherwise constant value.
 
   n_step_sarsa:
     env_max_steps: !!int 100                 # Maximal steps in environment before termination.
@@ -33,17 +33,18 @@ agents:
   sarsa_lambda:
     env_max_steps: !!int 100                 # Maximal steps in environment before termination.
     episodes: !!int 100_000                   # Number of training episodes
-    agent_eps_decay: !!str linear            # Epsilon decay schedule, in (linear, log, const)
-    agent_eps: !!float 1.0                   # Epsilon value. Used as start value when decay linear or log. Otherwise constant value.
+    agent_eps_decay: !!str const            # Epsilon decay schedule, in (linear, log, const)
+    agent_eps: !!float 0.1                  # Epsilon value. Used as start value when decay linear or log. Otherwise constant value.
     lambd: !!float 0.9                        # lambda parameter of sarsa(\lambda)
     parallel_eligibility_updates: !!bool False # whether the eligibility trace updates should be performed in serial
                                               # or parallel fashion (parallel only faster for large state spaces)
 
+# Only model based algo
   dyna_q:
     env_max_steps: !!int 100                 # Maximal steps in environment before termination.
     episodes: !!int 10_000                   # Number of training episodes
-    agent_eps_decay: !!str linear            # Epsilon decay schedule, in (linear, log, const)
-    agent_eps: !!float 1.0                   # Epsilon value. Used as start value when decay linear or log. Otherwise constant value.
+    agent_eps_decay: !!str const            # Epsilon decay schedule, in (linear, log, const)
+    agent_eps: !!float 0.1                  # Epsilon value. Used as start value when decay linear or log. Otherwise constant value.
     mem_size: !!int 10_000                   # Memory size
     model_samples: !!int 10                  # Num steps to update with model
 
