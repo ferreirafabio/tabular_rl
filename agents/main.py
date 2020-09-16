@@ -6,7 +6,7 @@ from utils import get_env
 from agents.Dyna_Q import dyna_q
 from agents.Q_learning import q_learning
 from agents.Double_Q_learning import double_q_learning
-from agents.SARSA import sarsa, n_step_sarsa
+from agents.Sarsa import sarsa, n_step_sarsa, sarsa_lambda
 
 
 if __name__ == '__main__':
@@ -55,6 +55,18 @@ if __name__ == '__main__':
         train_data, test_data, num_steps = sarsa(env, episodes, epsilon_decay=agent_eps_decay,
                                                  epsilon=agent_eps, discount_factor=.99, alpha=.5,
                                                  eval_every=eval_eps, render_eval=not no_render)
+    elif agent_name == 'n_step_sarsa':
+        n = agent_config['n']
+        train_data, test_data, num_steps = n_step_sarsa(env, episodes, epsilon_decay=agent_eps_decay,
+                                                 epsilon=agent_eps, discount_factor=.99, alpha=.5,
+                                                 eval_every=eval_eps, render_eval=not no_render, n=n)
+    elif agent_name == 'sarsa_lambda':
+        lambd = agent_config['lambd']
+        parallel_eligibility_updates = agent_config['parallel_eligibility_updates']
+        train_data, test_data, num_steps = sarsa_lambda(env, episodes, epsilon_decay=agent_eps_decay,
+                                                 epsilon=agent_eps, discount_factor=.99, alpha=.5,
+                                                 eval_every=eval_eps, render_eval=not no_render, lambd=lambd,
+                                                 parallel_eligibility_updates=parallel_eligibility_updates)
     elif agent_name == 'dyna_q':
         mem_size = agent_config['mem_size']
         model_samples = agent_config['model_samples']
@@ -62,11 +74,6 @@ if __name__ == '__main__':
                                                   epsilon=agent_eps, discount_factor=.99, alpha=.5,
                                                   eval_every=eval_eps, render_eval=not no_render,
                                                   memory_size=mem_size, sample_n_steps_from_model=model_samples)
-    elif agent_name == 'n_step_sarsa':
-        n = agent_config['n']
-        train_data, test_data, num_steps = n_step_sarsa(env, episodes, epsilon_decay=agent_eps_decay,
-                                                 epsilon=agent_eps, discount_factor=.99, alpha=.5,
-                                                 eval_every=eval_eps, render_eval=not no_render, n=n)
 
     else:
         raise NotImplementedError

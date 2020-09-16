@@ -56,7 +56,7 @@ def make_epsilon_greedy_policy(Q: defaultdict, epsilon: float, nA: int, Q_b: Opt
 
 
 def td_update(q: defaultdict, state: int, action: int, reward: float, next_state: int, gamma: float, alpha: float,
-              done: bool = False, q_b: Optional[defaultdict] = None, action_: Optional[int] = None):
+              done: bool = False, q_b: Optional[defaultdict] = None, action_: Optional[int] = None, eligibility: Optional[float] = None):
     """ Simple TD update rule """
 
     if q_b is None:
@@ -77,4 +77,14 @@ def td_update(q: defaultdict, state: int, action: int, reward: float, next_state
         td_delta = td_target - q[state][action]
     else:
         td_delta = td_target  # - 0
+    if eligibility:
+        # Sarsa(lambda) update
+        td_delta *= eligibility
     return q[state][action] + alpha * td_delta
+
+
+def update_eligibility_trace(s, Q_state, E_state, td_delta, alpha, discount_factor, lambd):
+    for a in range(Q_state.size):
+        Q_state[a] += alpha * td_delta * E_state[a]
+        E_state[a] *= discount_factor * lambd
+    return Q_state, E_state, s
