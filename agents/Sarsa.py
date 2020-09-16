@@ -177,8 +177,8 @@ def n_step_sarsa(
             tau = episode_length - n + 1
             if tau >= 0:
                 G = []
-                for i in range(tau+1, min(tau+n, T)):
-                    G.append((discount_factor**(i-tau-1))*n_step_rewards[i])
+                for i in range(tau+1, min(tau+n, T) + 1):
+                    G.append((discount_factor**(i-tau-1))*n_step_rewards[i - 1])
                 G = np.sum(G)
                 if tau + n < T:
                     G += (discount_factor**n) * Q[n_step_states[tau+n]][n_step_actions[tau+n]]
