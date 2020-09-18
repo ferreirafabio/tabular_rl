@@ -70,6 +70,7 @@ def q_learning(
         while True:  # roll out episode
             if init_timesteps_total is not None:  # Decay epsilon over timesteps
                 epsilon = epsilon_schedule[min(num_performed_steps, timesteps_total - 1)]
+                policy = make_epsilon_greedy_policy(Q, epsilon, environment.action_space.n)
             policy_action = np.random.choice(list(range(environment.action_space.n)), p=policy(policy_state))
             s_, policy_reward, policy_done, _ = environment.step(policy_action)
             num_performed_steps += 1
