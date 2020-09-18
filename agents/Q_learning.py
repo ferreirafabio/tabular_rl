@@ -93,7 +93,7 @@ def q_learning(
             policy_state = s_
         rewards.append(cummulative_reward)
         lens.append(episode_length)
-        train_steps_list.append(environment.total_steps)
+        # train_steps_list.append(environment.total_steps)
 
         if init_timesteps_total is None:
             if i_episode % eval_every == 0:
@@ -121,7 +121,7 @@ def eval_policy(environment, Q, render_eval, test_rewards, test_lens, test_steps
         environment.render()
     while True:  # roll out episode
         policy_action = np.random.choice(np.flatnonzero(Q[policy_state] == Q[policy_state].max()))
-        environment.total_steps -= 1  # don't count evaluation steps
+        # environment.total_steps -= 1  # don't count evaluation steps
         s_, policy_reward, policy_done, _ = environment.step(policy_action)
         test_steps += 1
         if render_eval:
