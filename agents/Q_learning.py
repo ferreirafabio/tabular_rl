@@ -3,7 +3,7 @@ Taken from https://github.com/automl/TabularTempoRL/
 """
 
 import numpy as np
-
+import pandas as pd
 from collections import defaultdict
 from tabular_rl.envs.Grid import GridCore
 from tabular_rl.agents.rl_helpers import get_decay_schedule, make_epsilon_greedy_policy, td_update
@@ -42,6 +42,7 @@ def q_learning(
     Q = defaultdict(lambda: np.zeros(environment.action_space.n))
 
     # Keeps track of episode lengths and rewards
+    timesteps_per_iteration_statistics = []
     rewards = []
     lens = []
     test_rewards = []
@@ -74,19 +75,25 @@ def q_learning(
             policy_action = np.random.choice(list(range(environment.action_space.n)), p=policy(policy_state))
             s_, policy_reward, policy_done, _ = environment.step(policy_action)
             num_performed_steps += 1
+
+            if num_performed_steps % 1000 == 0:
+                timesteps_per_iteration_statistics.append([num_performed_steps, np.mean(np.divide(rewards, lens)), np.mean(lens)])
+
             if num_performed_steps >= timesteps_total:
                 break
+
             cummulative_reward += policy_reward
             episode_length += 1
 
             Q[policy_state][policy_action] = td_update(Q, policy_state, policy_action,
                                                        policy_reward, s_, discount_factor, alpha, policy_done)
 
-            if init_timesteps_total is not None:
-                if num_performed_steps % eval_every == 0:
-                    test_rewards, test_lens, test_steps_list = eval_policy(
-                        environment, Q, render_eval, test_rewards, test_lens, test_steps_list,
-                        (num_performed_steps, timesteps_total, 'steps'))
+            # todo: currently eval_policy will produce endless loop since policy_done is never set to True there
+            # if init_timesteps_total is not None:
+            #     if num_performed_steps % eval_every == 0:
+            #         test_rewards, test_lens, test_steps_list = eval_policy(
+            #             environment, Q, render_eval, test_rewards, test_lens, test_steps_list,
+            #             (num_performed_steps, timesteps_total, 'steps'))
 
             if policy_done:
                 break
@@ -100,14 +107,16 @@ def q_learning(
                 test_rewards, test_lens, test_steps_list = eval_policy(
                     environment, Q, render_eval, test_rewards, test_lens, test_steps_list,
                     (i_episode, num_episodes, 'episodes'))
+
         if num_performed_steps >= timesteps_total:
             break
+
     if init_timesteps_total is None:
         print('Done %4d/%4d %s' % (i_episode, num_episodes, 'episodes'))
     else:
         print('Done %4d/%4d %s' % (num_performed_steps, timesteps_total, 'steps'))
 
-    return (rewards, lens), (test_rewards, test_lens), (train_steps_list, test_steps_list)
+    return (rewards, lens), (test_rewards, test_lens), (train_steps_list, test_steps_list), timesteps_per_iteration_statistics
 
 
 def eval_policy(environment, Q, render_eval, test_rewards, test_lens, test_steps_list, crit=()):
