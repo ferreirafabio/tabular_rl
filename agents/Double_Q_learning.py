@@ -1,8 +1,8 @@
 import numpy as np
 
 from collections import defaultdict
-from envs.Grid import GridCore
-from agents.rl_helpers import get_decay_schedule, make_epsilon_greedy_policy, td_update
+from tabular_rl.envs.Grid import GridCore
+from tabular_rl.agents.rl_helpers import get_decay_schedule, make_epsilon_greedy_policy, td_update
 
 
 def eval_policy(environment, Q_a, Q_b, render_eval, test_rewards, test_lens, test_steps_list, crit=()):

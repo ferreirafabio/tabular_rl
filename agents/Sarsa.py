@@ -3,8 +3,8 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 from collections import defaultdict
-from envs.Grid import GridCore
-from agents.rl_helpers import get_decay_schedule, make_epsilon_greedy_policy, td_update, update_eligibility_trace
+from tabular_rl.envs.Grid import GridCore
+from tabular_rl.agents.rl_helpers import get_decay_schedule, make_epsilon_greedy_policy, td_update, update_eligibility_trace
 
 
 def eval_policy(environment, Q, render_eval, test_rewards, test_lens, test_steps_list, crit=()):

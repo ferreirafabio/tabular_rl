@@ -1,9 +1,9 @@
 import numpy as np
 
 from collections import defaultdict, deque
-from envs.Grid import GridCore
-from agents.rl_helpers import get_decay_schedule, make_epsilon_greedy_policy, td_update
-from agents.Q_learning import eval_policy
+from tabular_rl.envs.Grid import GridCore
+from tabular_rl.agents.rl_helpers import get_decay_schedule, make_epsilon_greedy_policy, td_update
+from tabular_rl.agents.Q_learning import eval_policy
 
 
 class SimpleMemory:

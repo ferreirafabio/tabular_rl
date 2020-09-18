@@ -2,11 +2,11 @@ import yaml
 import numpy as np
 import random
 
-from utils import get_env
-from agents.Dyna_Q import dyna_q
-from agents.Q_learning import q_learning
-from agents.Double_Q_learning import double_q_learning
-from agents.Sarsa import sarsa, n_step_sarsa, sarsa_lambda
+from tabular_rl.utils import get_env
+from tabular_rl.agents.Dyna_Q import dyna_q
+from tabular_rl.agents.Q_learning import q_learning
+from tabular_rl.agents.Double_Q_learning import double_q_learning
+from tabular_rl.agents.Sarsa import sarsa, n_step_sarsa, sarsa_lambda
 
 if __name__ == '__main__':
     with open("../config.yaml", "r") as stream:
