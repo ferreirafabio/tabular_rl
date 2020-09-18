@@ -8,7 +8,6 @@ from agents.Q_learning import q_learning
 from agents.Double_Q_learning import double_q_learning
 from agents.Sarsa import sarsa, n_step_sarsa, sarsa_lambda
 
-
 if __name__ == '__main__':
     with open("../config.yaml", "r") as stream:
         config = yaml.safe_load(stream)
@@ -27,6 +26,10 @@ if __name__ == '__main__':
     no_render = config["no_render"]
 
     episodes = agent_config["episodes"]
+    try:
+        timesteps_total = agent_config['timesteps_total']
+    except KeyError:
+        timesteps_total = None
     env_max_steps = agent_config["env_max_steps"]
     agent_eps_decay = agent_config["agent_eps_decay"]
     agent_eps = agent_config["agent_eps"]
@@ -40,6 +43,7 @@ if __name__ == '__main__':
         # Clear screen in ANSI terminal
         print('\033c')
         print('\x1bc')
+    print(agent_name)
 
     # todo: make q_learning a class and pass config as a parameter
     # todo: perhaps write rl algorithm super class
@@ -47,33 +51,39 @@ if __name__ == '__main__':
     # todo: implement Q function as a Variable
     # implement n-step SARSA, n-step q-learning?
     if agent_name == 'q_learning':
-        train_data, test_data, num_steps = q_learning(env, episodes, epsilon_decay=agent_eps_decay, epsilon=agent_eps,
+        train_data, test_data, num_steps = q_learning(env, episodes, timesteps_total=timesteps_total,
+                                                      epsilon_decay=agent_eps_decay, epsilon=agent_eps,
                                                       discount_factor=discount_factor, alpha=alpha,
                                                       eval_every=eval_eps, render_eval=not no_render)
     elif agent_name == 'double_q_learning':
-        train_data, test_data, num_steps = double_q_learning(env, episodes, epsilon_decay=agent_eps_decay,
+        train_data, test_data, num_steps = double_q_learning(env, episodes, timesteps_total=timesteps_total,
+                                                             epsilon_decay=agent_eps_decay,
                                                              epsilon=agent_eps, discount_factor=discount_factor, alpha=alpha,
                                                              eval_every=eval_eps, render_eval=not no_render)
     elif agent_name == 'sarsa':
-        train_data, test_data, num_steps = sarsa(env, episodes, epsilon_decay=agent_eps_decay,
+        train_data, test_data, num_steps = sarsa(env, episodes, timesteps_total=timesteps_total,
+                                                 epsilon_decay=agent_eps_decay,
                                                  epsilon=agent_eps, discount_factor=discount_factor, alpha=alpha,
                                                  eval_every=eval_eps, render_eval=not no_render)
     elif agent_name == 'n_step_sarsa':
         n = agent_config['n']
-        train_data, test_data, num_steps = n_step_sarsa(env, episodes, epsilon_decay=agent_eps_decay,
-                                                 epsilon=agent_eps, discount_factor=discount_factor, alpha=alpha,
-                                                 eval_every=eval_eps, render_eval=not no_render, n=n)
+        train_data, test_data, num_steps = n_step_sarsa(env, episodes, timesteps_total=timesteps_total,
+                                                        epsilon_decay=agent_eps_decay,
+                                                        epsilon=agent_eps, discount_factor=discount_factor, alpha=alpha,
+                                                        eval_every=eval_eps, render_eval=not no_render, n=n)
     elif agent_name == 'sarsa_lambda':
         lambd = agent_config['lambd']
         parallel_eligibility_updates = agent_config['parallel_eligibility_updates']
-        train_data, test_data, num_steps = sarsa_lambda(env, episodes, epsilon_decay=agent_eps_decay,
-                                                 epsilon=agent_eps, discount_factor=discount_factor, alpha=alpha,
-                                                 eval_every=eval_eps, render_eval=not no_render, lambd=lambd,
-                                                 parallel_eligibility_updates=parallel_eligibility_updates)
+        train_data, test_data, num_steps = sarsa_lambda(env, episodes, timesteps_total=timesteps_total,
+                                                        epsilon_decay=agent_eps_decay,
+                                                        epsilon=agent_eps, discount_factor=discount_factor, alpha=alpha,
+                                                        eval_every=eval_eps, render_eval=not no_render, lambd=lambd,
+                                                        parallel_eligibility_updates=parallel_eligibility_updates)
     elif agent_name == 'dyna_q':
         mem_size = agent_config['mem_size']
         model_samples = agent_config['model_samples']
-        train_data, test_data, num_steps = dyna_q(env, episodes, epsilon_decay=agent_eps_decay,
+        train_data, test_data, num_steps = dyna_q(env, episodes, timesteps_total=timesteps_total,
+                                                  epsilon_decay=agent_eps_decay,
                                                   epsilon=agent_eps, discount_factor=discount_factor, alpha=alpha,
                                                   eval_every=eval_eps, render_eval=not no_render,
                                                   memory_size=mem_size, sample_n_steps_from_model=model_samples)
