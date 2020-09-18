@@ -3,6 +3,8 @@ agent_name: !!str sarsa_lambda         # the agent name (q_learning, double_q_le
 seed: !!int 12345                           # random initialization seed
 no_render: !!bool False                     # Deactivate rendering of environment evaluation
 eval_eps: !!int 500                         # After how many episodes to evaluate
+discount_factor: !!float .99
+alpha: !!float .5
 
 agents:
   q_learning:
