@@ -19,7 +19,8 @@ def q_learning(
         epsilon_decay: str = 'const',
         decay_starts: int = 0,
         eval_every: int = 10,
-        render_eval: bool = True):
+        render_eval: bool = True,
+        rolling_window_mean_statistics: int = 10):
     """
     Vanilla tabular Q-learning algorithm
     :param environment: which environment to use
@@ -77,7 +78,8 @@ def q_learning(
             num_performed_steps += 1
 
             if num_performed_steps % 1000 == 0:
-                timesteps_per_iteration_statistics.append([num_performed_steps, np.mean(np.divide(rewards, lens)), np.mean(lens)])
+                timesteps_per_iteration_statistics.append([num_performed_steps, np.mean(rewards[-rolling_window_mean_statistics:]),
+                                                           np.mean(lens[-rolling_window_mean_statistics:])])
 
             if num_performed_steps >= timesteps_total:
                 break
