@@ -78,8 +78,11 @@ def q_learning(
             num_performed_steps += 1
 
             if num_performed_steps % 1000 == 0:
-                timesteps_per_iteration_statistics.append([num_performed_steps, np.mean(rewards[-rolling_window_mean_statistics:]),
-                                                           np.mean(lens[-rolling_window_mean_statistics:])])
+                if (len(rewards) or len(lens)) == 0:
+                    timesteps_per_iteration_statistics.append([num_performed_steps, 0., 0.])
+                else:
+                    timesteps_per_iteration_statistics.append([num_performed_steps, np.mean(rewards[-rolling_window_mean_statistics:]),
+                                                               np.mean(lens[-rolling_window_mean_statistics:])])
 
             if num_performed_steps >= timesteps_total:
                 break
