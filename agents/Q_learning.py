@@ -34,6 +34,7 @@ def q_learning(
     :param decay_starts: After how many episodes epsilon decay starts
     :param eval_every: Number of episodes between evaluations
     :param render_eval: Flag to activate/deactivate rendering of evaluation runs
+    :param rolling_window_mean_statistics: specifies the size n of the rolling window to compute the means over the last n rewards
     :return: training and evaluation statistics (i.e. rewards and episode lengths)
     """
     assert 0 <= discount_factor <= 1, 'Lambda should be in [0, 1]'
@@ -97,7 +98,6 @@ def q_learning(
             Q[policy_state][policy_action] = td_update(Q, policy_state, policy_action,
                                                        policy_reward, s_, discount_factor, alpha, policy_done)
 
-            # # todo: currently eval_policy will produce endless loop since policy_done is never set to True there
             if init_timesteps_total is not None:
                 if num_performed_steps % eval_every == 0:
                     test_rewards, test_lens, test_steps_list = eval_policy(
@@ -114,8 +114,8 @@ def q_learning(
         if init_timesteps_total is None:
             if i_episode % eval_every == 0:
                 test_rewards, test_lens, test_steps_list = eval_policy(
-                    environment, Q, render_eval, test_rewards, test_lens, test_steps_list,
-                    (i_episode, num_episodes, 'episodes'))
+                    environment, Q, render_eval, test_rewards, test_lens, test_steps_list, horizon=horizon,
+                    crit=(i_episode, num_episodes, 'episodes'))
 
         if num_performed_steps >= timesteps_total:
             break
