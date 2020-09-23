@@ -3,7 +3,6 @@ Taken from https://github.com/automl/TabularTempoRL/
 """
 
 import numpy as np
-import pandas as pd
 from collections import defaultdict
 from tabular_rl.envs.Grid import GridCore
 from tabular_rl.agents.rl_helpers import get_decay_schedule, make_epsilon_greedy_policy, td_update
